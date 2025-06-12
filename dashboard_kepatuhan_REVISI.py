@@ -17,8 +17,7 @@ def process_data(df_input, tahun_pajak, jenis_pajak):
     'TMT': ['TMT'],
     'KLASIFIKASI': ['KLASIFIKASI', 'KATEGORI', 'JENIS']
 }
-
-    def find_column(possible_names):
+def find_column(possible_names):
     for name in possible_names:
         if name in df.columns:
             return name
