@@ -10,33 +10,34 @@ def process_data(df_input, tahun_pajak, jenis_pajak):
     df = df_input.copy()
     df.columns = df.columns.str.strip().str.upper()
 
-# --------- Normalisasi kolom wajib ---------
-alias_map = {
-    'NM UNIT': ['NM UNIT', 'NAMA UNIT', 'UPPPD', 'UNIT', 'UNIT PAJAK'],
-    'STATUS': ['STATUS'],
-    'TMT': ['TMT'],
-    'KLASIFIKASI': ['KLASIFIKASI', 'KATEGORI', 'JENIS']
-}
+    # --------- Normalisasi kolom wajib ---------
+    alias_map = {
+        'NM UNIT': ['NM UNIT', 'NAMA UNIT', 'UPPPD', 'UNIT', 'UNIT PAJAK'],
+        'STATUS': ['STATUS'],
+        'TMT': ['TMT'],
+        'KLASIFIKASI': ['KLASIFIKASI', 'KATEGORI', 'JENIS']
+    }
 
-# Ubah semua nama kolom ke uppercase dan strip
-df.columns = df.columns.str.strip().str.upper()
+    def find_column(possible_names):
+        for name in possible_names:
+            if name in df.columns:
+                return name
+        return None
 
-# Fungsi untuk cari nama kolom yang cocok
-def find_column(possible_names):
-    for name in possible_names:
-        if name in df.columns:
-            return name
-    return None
+    kolom_nm_unit = find_column(alias_map['NM UNIT'])
+    kolom_status = find_column(alias_map['STATUS'])
+    kolom_tmt = find_column(alias_map['TMT'])
 
-# Temukan kolom penting
-kolom_nm_unit = find_column(alias_map['NM UNIT'])
-kolom_status = find_column(alias_map['STATUS'])
-kolom_tmt = find_column(alias_map['TMT'])
+    if not all([kolom_nm_unit, kolom_status, kolom_tmt]):
+        raise ValueError("❌ Kolom wajib 'NM UNIT/UPPPD', 'STATUS', atau 'TMT' tidak ditemukan.")
 
-# Cek apakah semua kolom penting ditemukan
-if not all([kolom_nm_unit, kolom_status, kolom_tmt]):
-    raise ValueError("❌ Kolom wajib 'NM UNIT/UPPPD', 'STATUS', atau 'TMT' tidak ditemukan.")
-    
+    # Gunakan nama standar agar konsisten
+    df.rename(columns={
+        kolom_nm_unit: 'NM UNIT',
+        kolom_status: 'STATUS',
+        kolom_tmt: 'TMT'
+    }, inplace=True)
+
     df['TMT'] = pd.to_datetime(df['TMT'], errors='coerce')
 
     # Validasi kolom pembayaran
@@ -51,6 +52,7 @@ if not all([kolom_nm_unit, kolom_status, kolom_tmt]):
                     payment_cols.append(col)
         except:
             continue
+
     if not payment_cols:
         raise ValueError("❌ Tidak ditemukan kolom pembayaran valid untuk tahun pajak yang dipilih.")
 
@@ -89,6 +91,7 @@ if not all([kolom_nm_unit, kolom_status, kolom_tmt]):
     df['Total Pembayaran'] = df['Total Pembayaran'].map(lambda x: f"{x:,.2f}")
     df['Kepatuhan (%)'] = df['Kepatuhan (%)'].map(lambda x: f"{x:.2f}")
     return df, payment_cols
+
 
 # ---------- KONFIG HALAMAN ----------
 st.set_page_config(page_title="📊 Dashboard Kepatuhan Pajak Daerah", layout="wide")
