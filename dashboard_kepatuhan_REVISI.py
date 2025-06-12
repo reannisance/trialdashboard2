@@ -65,8 +65,8 @@ for col in df.columns:
 if not payment_cols:
     raise ValueError("❌ Tidak ditemukan kolom pembayaran valid untuk tahun pajak yang dipilih.")
 
-# Hitung total pembayaran
-df['Total Pembayaran'] = df[payment_cols].apply(pd.to_numeric, errors='coerce').sum(axis=1)
+    # Hitung total pembayaran
+    df['Total Pembayaran'] = df[payment_cols].apply(pd.to_numeric, errors='coerce').sum(axis=1)
 
     # Hitung Bulan Aktif
     bulan_aktif = []
