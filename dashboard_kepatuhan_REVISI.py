@@ -11,7 +11,7 @@ def process_data(df_input, tahun_pajak, jenis_pajak):
     df.columns = df.columns.str.strip().str.upper()
 
     # Kolom wajib
-    required_columns = ['NAMA WP', 'STATUS', 'TMT', 'UPPPD']
+    required_columns = ['STATUS', 'TMT', 'NMUNIT']
     if jenis_pajak == "HIBURAN":
         required_columns.append('KATEGORI')
     for col in required_columns:
@@ -76,6 +76,32 @@ st.set_page_config(page_title="📊 Dashboard Kepatuhan Pajak Daerah", layout="w
 st.title("🎯 Dashboard Kepatuhan Pajak Daerah")
 jenis_pajak = st.selectbox("📄 Pilih Jenis Pajak", ["MAKAN MINUM", "HIBURAN"])
 st.markdown("Upload file Excel, pilih sheet, filter, dan lihat visualisasi ✨")
+
+# ---------- PANDUAN ----------
+with st.expander("📘 Panduan Format Excel yang dapat digunakan (Klik untuk lihat)"):
+    st.markdown("""
+    Berikut adalah aturan format file Excel yang dapat digunakan:
+
+    ✅ **Kolom Wajib:**
+    - `NAMA OP`, `STATUS`, `TMT`, `KLASIFIKASI` (Jika PBJT Jasa Kesenian & Hiburan)
+
+    ✅ **Kolom Pembayaran Bulanan:**
+    - Nama kolom bisa `2024-01-01`, `Jan-24`, dll — yang penting ada tahun pajaknya.
+    - Nilai harus berupa angka (jangan pakai teks atau simbol).
+
+    📁 Gunakan contoh file bernama **CONTOH_FORMAT_SETORAN MASA.xlsx**
+    """)
+
+st.markdown(
+    """
+    <a href="https://raw.githubusercontent.com/reannisance/trialdashboard1/main/CONTOH_FORMAT_SETORAN%20MASA.xlsx" download>
+        <button style='padding: 0.5em 1em; font-size: 16px; color: red; border: 1px solid red; border-radius: 6px; background: transparent;'>
+            📎 Download Contoh Format Excel
+        </button>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
 
 # ---------- UPLOAD ----------
 st.markdown("### 📄 Silakan upload file Excel berisi data setoran masa pajak.")
