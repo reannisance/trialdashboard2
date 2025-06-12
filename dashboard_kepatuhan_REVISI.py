@@ -11,47 +11,47 @@ def process_data(df_input, tahun_pajak, jenis_pajak):
     df.columns = df.columns.str.strip().str.upper()
 
     # --------- Normalisasi kolom wajib ---------
-alias_map = {
+    alias_map = {
     'NM UNIT': ['NM UNIT', 'NAMA UNIT', 'UPPPD', 'UNIT', 'UNIT PAJAK'],
     'STATUS': ['STATUS'],
     'TMT': ['TMT'],
     'KLASIFIKASI': ['KLASIFIKASI', 'KATEGORI', 'JENIS']
 }
 
-def find_column(possible_names):
+    def find_column(possible_names):
     for name in possible_names:
         if name in df.columns:
             return name
     return None
 
-# Cari kolom wajib utama
-kolom_nm_unit = find_column(alias_map['NM UNIT'])
-kolom_status = find_column(alias_map['STATUS'])
-kolom_tmt = find_column(alias_map['TMT'])
-kolom_klasifikasi = find_column(alias_map['KLASIFIKASI'])  # Optional, tergantung jenis_pajak
+    # Cari kolom wajib utama
+    kolom_nm_unit = find_column(alias_map['NM UNIT'])
+    kolom_status = find_column(alias_map['STATUS'])
+    kolom_tmt = find_column(alias_map['TMT'])
+    kolom_klasifikasi = find_column(alias_map['KLASIFIKASI'])  # Optional, tergantung jenis_pajak
 
-# Validasi wajib minimum
-if not all([kolom_nm_unit, kolom_status, kolom_tmt]):
+    # Validasi wajib minimum
+    if not all([kolom_nm_unit, kolom_status, kolom_tmt]):
     raise ValueError("❌ Kolom wajib 'NM UNIT/UPPPD', 'STATUS', atau 'TMT' tidak ditemukan.")
 
-# Validasi kolom KLASIFIKASI hanya untuk jenis pajak HIBURAN
-if jenis_pajak.upper() == "HIBURAN" and not kolom_klasifikasi:
+    # Validasi kolom KLASIFIKASI hanya untuk jenis pajak HIBURAN
+    if jenis_pajak.upper() == "HIBURAN" and not kolom_klasifikasi:
     raise ValueError("❌ Kolom 'KLASIFIKASI' wajib untuk jenis pajak HIBURAN.")
 
-# Rename kolom supaya konsisten
-df.rename(columns={
+    # Rename kolom supaya konsisten
+    df.rename(columns={
     kolom_nm_unit: 'NM UNIT',
     kolom_status: 'STATUS',
     kolom_tmt: 'TMT',
     **({kolom_klasifikasi: 'KLASIFIKASI'} if kolom_klasifikasi else {})  # hanya kalau ada
 }, inplace=True)
 
-# Pastikan format datetime di TMT
-df['TMT'] = pd.to_datetime(df['TMT'], errors='coerce')
+    # Pastikan format datetime di TMT
+    df['TMT'] = pd.to_datetime(df['TMT'], errors='coerce')
 
-# Validasi kolom pembayaran bulanan
-payment_cols = []
-for col in df.columns:
+    # Validasi kolom pembayaran bulanan
+    payment_cols = []
+    for col in df.columns:
     try:
         col_date = pd.to_datetime(col, format="%b-%y", errors="coerce")
         if pd.isna(col_date):
