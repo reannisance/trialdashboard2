@@ -11,52 +11,62 @@ def process_data(df_input, tahun_pajak, jenis_pajak):
     df.columns = df.columns.str.strip().str.upper()
 
     # --------- Normalisasi kolom wajib ---------
-    alias_map = {
-        'NM UNIT': ['NM UNIT', 'NAMA UNIT', 'UPPPD', 'UNIT', 'UNIT PAJAK'],
-        'STATUS': ['STATUS'],
-        'TMT': ['TMT'],
-        'KLASIFIKASI': ['KLASIFIKASI', 'KATEGORI', 'JENIS']
-    }
+alias_map = {
+    'NM UNIT': ['NM UNIT', 'NAMA UNIT', 'UPPPD', 'UNIT', 'UNIT PAJAK'],
+    'STATUS': ['STATUS'],
+    'TMT': ['TMT'],
+    'KLASIFIKASI': ['KLASIFIKASI', 'KATEGORI', 'JENIS']
+}
 
-    def find_column(possible_names):
-        for name in possible_names:
-            if name in df.columns:
-                return name
-        return None
+def find_column(possible_names):
+    for name in possible_names:
+        if name in df.columns:
+            return name
+    return None
 
-    kolom_nm_unit = find_column(alias_map['NM UNIT'])
-    kolom_status = find_column(alias_map['STATUS'])
-    kolom_tmt = find_column(alias_map['TMT'])
+# Cari kolom wajib utama
+kolom_nm_unit = find_column(alias_map['NM UNIT'])
+kolom_status = find_column(alias_map['STATUS'])
+kolom_tmt = find_column(alias_map['TMT'])
+kolom_klasifikasi = find_column(alias_map['KLASIFIKASI'])  # Optional, tergantung jenis_pajak
 
-    if not all([kolom_nm_unit, kolom_status, kolom_tmt]):
-        raise ValueError("❌ Kolom wajib 'NM UNIT/UPPPD', 'STATUS', atau 'TMT' tidak ditemukan.")
+# Validasi wajib minimum
+if not all([kolom_nm_unit, kolom_status, kolom_tmt]):
+    raise ValueError("❌ Kolom wajib 'NM UNIT/UPPPD', 'STATUS', atau 'TMT' tidak ditemukan.")
 
-    # Gunakan nama standar agar konsisten
-    df.rename(columns={
-        kolom_nm_unit: 'NM UNIT',
-        kolom_status: 'STATUS',
-        kolom_tmt: 'TMT'
-    }, inplace=True)
+# Validasi kolom KLASIFIKASI hanya untuk jenis pajak HIBURAN
+if jenis_pajak.upper() == "HIBURAN" and not kolom_klasifikasi:
+    raise ValueError("❌ Kolom 'KLASIFIKASI' wajib untuk jenis pajak HIBURAN.")
 
-    df['TMT'] = pd.to_datetime(df['TMT'], errors='coerce')
+# Rename kolom supaya konsisten
+df.rename(columns={
+    kolom_nm_unit: 'NM UNIT',
+    kolom_status: 'STATUS',
+    kolom_tmt: 'TMT',
+    **({kolom_klasifikasi: 'KLASIFIKASI'} if kolom_klasifikasi else {})  # hanya kalau ada
+}, inplace=True)
 
-    # Validasi kolom pembayaran
-    payment_cols = []
-    for col in df.columns:
-        try:
-            col_date = pd.to_datetime(col, format="%b-%y", errors="coerce")
-            if pd.isna(col_date):
-                col_date = pd.to_datetime(col, errors="coerce")
-            if pd.notna(col_date) and col_date.year == tahun_pajak:
-                if pd.to_numeric(df[col], errors='coerce').notna().sum() > 0:
-                    payment_cols.append(col)
-        except:
-            continue
+# Pastikan format datetime di TMT
+df['TMT'] = pd.to_datetime(df['TMT'], errors='coerce')
 
-    if not payment_cols:
-        raise ValueError("❌ Tidak ditemukan kolom pembayaran valid untuk tahun pajak yang dipilih.")
+# Validasi kolom pembayaran bulanan
+payment_cols = []
+for col in df.columns:
+    try:
+        col_date = pd.to_datetime(col, format="%b-%y", errors="coerce")
+        if pd.isna(col_date):
+            col_date = pd.to_datetime(col, errors="coerce")
+        if pd.notna(col_date) and col_date.year == tahun_pajak:
+            if pd.to_numeric(df[col], errors='coerce').notna().sum() > 0:
+                payment_cols.append(col)
+    except:
+        continue
 
-    df['Total Pembayaran'] = df[payment_cols].apply(pd.to_numeric, errors='coerce').sum(axis=1)
+if not payment_cols:
+    raise ValueError("❌ Tidak ditemukan kolom pembayaran valid untuk tahun pajak yang dipilih.")
+
+# Hitung total pembayaran
+df['Total Pembayaran'] = df[payment_cols].apply(pd.to_numeric, errors='coerce').sum(axis=1)
 
     # Hitung Bulan Aktif
     bulan_aktif = []
@@ -96,7 +106,7 @@ def process_data(df_input, tahun_pajak, jenis_pajak):
 # ---------- KONFIG HALAMAN ----------
 st.set_page_config(page_title="📊 Dashboard Kepatuhan Pajak Daerah", layout="wide")
 st.title("🎯 Dashboard Kepatuhan Pajak Daerah")
-jenis_pajak = st.selectbox("📄 Pilih Jenis Pajak", ["MAKAN MINUM", "HIBURAN"])
+jenis_pajak = st.selectbox("📄 Pilih Jenis Pajak", ["MAKAN MINUM", "JASA KESENIAN DAN HIBURAN"])
 st.markdown("Upload file Excel, pilih sheet, filter, dan lihat visualisasi ✨")
 
 # ---------- PANDUAN ----------
