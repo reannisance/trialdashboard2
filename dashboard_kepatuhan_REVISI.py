@@ -10,14 +10,33 @@ def process_data(df_input, tahun_pajak, jenis_pajak):
     df = df_input.copy()
     df.columns = df.columns.str.strip().str.upper()
 
-    # Kolom wajib
-    required_columns = ['STATUS', 'TMT', 'NMUNIT']
-    if jenis_pajak == "HIBURAN":
-        required_columns.append('KATEGORI')
-    for col in required_columns:
-        if col not in df.columns:
-            raise ValueError(f"❌ Kolom wajib '{col}' tidak ditemukan.")
+# --------- Normalisasi kolom wajib ---------
+alias_map = {
+    'NM UNIT': ['NM UNIT', 'NAMA UNIT', 'UPPPD', 'UNIT', 'UNIT PAJAK'],
+    'STATUS': ['STATUS'],
+    'TMT': ['TMT'],
+    'KLASIFIKASI': ['KLASIFIKASI', 'KATEGORI', 'JENIS']
+}
 
+# Ubah semua nama kolom ke uppercase dan strip
+df.columns = df.columns.str.strip().str.upper()
+
+# Fungsi untuk cari nama kolom yang cocok
+def find_column(possible_names):
+    for name in possible_names:
+        if name in df.columns:
+            return name
+    return None
+
+# Temukan kolom penting
+kolom_nm_unit = find_column(alias_map['NM UNIT'])
+kolom_status = find_column(alias_map['STATUS'])
+kolom_tmt = find_column(alias_map['TMT'])
+
+# Cek apakah semua kolom penting ditemukan
+if not all([kolom_nm_unit, kolom_status, kolom_tmt]):
+    raise ValueError("❌ Kolom wajib 'NM UNIT/UPPPD', 'STATUS', atau 'TMT' tidak ditemukan.")
+    
     df['TMT'] = pd.to_datetime(df['TMT'], errors='coerce')
 
     # Validasi kolom pembayaran
